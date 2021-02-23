@@ -9,6 +9,7 @@
     "test": "tests"
   },
   "dependencies": {
+    "aws-sdk": "2.849.0",
     "dotenv": "^8.0.0",
     "express": "^4.17.0",
     "newsapi": "^2.4.0",
@@ -24,10 +25,11 @@
     "jsdoc": "^3.6.2",
     "prettier": "^2.0.5",
     "serverless-dotenv-plugin": "^3.0.0",
+    "serverless-dynamodb-local": "0.2.37",
     "serverless-offline": "^5.12.1"
   },
   "scripts": {
-    "start": "sls offline start --stage dev",
+    "start": "serverless offline start",
     "test": "jest"
   },
   "jest": {

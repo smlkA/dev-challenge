@@ -1,8 +1,22 @@
 service: news-service
 
 plugins:
+  - serverless-dynamodb-local
   - serverless-offline
   - serverless-dotenv-plugin # use .env for environment vars
+
+custom:
+  endpoints:
+    dynamodb-url: 'http://localhost:4000'
+
+  tableNames:
+    bookmarks: 'cc-bookmarks'
+
+  dynamodb:
+    stages:
+      - test
+    start:
+      migrate: true
 
 provider:
   name: aws
@@ -13,6 +27,9 @@ provider:
   useDotenv: true
   # apiKeys:
   #   - news_api
+  environment:
+    CONFIG_BOOKMARKS_TABLE: ${self:custom.tableNames.bookmarks}
+    CONFIG_DYNAMODB_ENDPOINT: ${self:custom.endpoints.dynamodb-url}
 
 functions:
   hello:
@@ -36,3 +53,22 @@ functions:
                 type: true
             schema:
               application/json: ${file(body_schemas/fetch.json)}
+  addBookmark:
+    handler: bookmarks/handler.addBookmark
+    events:
+      - http:
+          path: /bookmarks
+          method: post
+          # private: true
+          cors: true
+  getBookmarks:
+    handler: bookmarks/handler.getBookmarks
+    events:
+      - http:
+          path: /bookmarks
+          method: get
+          # private: true
+          cors: true
+
+resources:
+  - ${file(resources/bookmarks-table.yml)}
