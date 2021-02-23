@@ -54,15 +54,16 @@ functions:
             schema:
               application/json: ${file(body_schemas/fetch.json)}
   addBookmark:
-    handler: bookmarks/handler.addBookmark
+    handler: handler.addBookmark
     events:
       - http:
           path: /bookmarks
           method: post
           # private: true
           cors: true
+          # would be nice to add some payload validation but it seems does not work
   getBookmarks:
-    handler: bookmarks/handler.getBookmarks
+    handler: handler.getBookmarks
     events:
       - http:
           path: /bookmarks
