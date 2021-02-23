@@ -15,7 +15,7 @@ module.exports.fetchArticles = async (type, params) => {
       console.log('found: ', data.totalResults)
       return data.articles
     case 'search':
-      await exports.everything(params)
+      data = await exports.everything(params)
       console.log('found: ', data.totalResults)
       return data.articles
     default:
