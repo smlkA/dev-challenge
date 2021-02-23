@@ -28,12 +28,13 @@ module.exports.hello = async (event, ctx, cb) => {
  * @return {JSON} HTTP response JSON obj
  *
  */
-module.exports.fetchArticles = async (event, ctx, cb) => {
+module.exports.fetchArticles = (event, ctx, cb) => {
   // eslint-disable-next-line no-console
-  console.log(event.queryStringParameters.type, JSON.parse(event.body))
-  await news
-    .fetchArticles(event.queryStringParameters.type, JSON.parse(event.body))
-    .then((articles) =>
+  const { type } = event.queryStringParameters
+  const param = JSON.parse(event.body)
+  news
+    .fetchArticles(type, param)
+    .then((articles) => {
       cb(null, {
         statusCode: 200,
         body: JSON.stringify(
@@ -44,5 +45,11 @@ module.exports.fetchArticles = async (event, ctx, cb) => {
           2
         ),
       })
-    )
+    })
+    .catch((error) => {
+      // eslint-disable-next-line no-console
+      console.log(error)
+      cb(error)
+      // TODO add error handler
+    })
 }
