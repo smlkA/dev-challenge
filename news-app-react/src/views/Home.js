@@ -1,143 +1,118 @@
-import React, { useState, useEffect, useRef } from 'react';
-import debounce from 'debounce';
-import styled from 'styled-components';
-import SearchIcon from '@material-ui/icons/Search';
+import React, { useState, useEffect } from "react";
+import { useDebouncedCallback } from "use-debounce";
+import styled from "styled-components";
+import SearchIcon from "@material-ui/icons/Search";
+import FormControl from "@material-ui/core/FormControl";
+import Select from "@material-ui/core/Select";
+import InputLabel from "@material-ui/core/InputLabel";
+import MenuItem from "@material-ui/core/MenuItem";
 
-import Spinner from 'components/Spinner';
-import Article from 'components/Article';
+import Spinner from "components/Spinner";
+import Article from "components/Article";
 
-const stage = process.env.NODE_ENV;
-const baseURL = `${process.env.APP_SERVICE_URL}${stage}`;
-
-function loadSearchInput(setSearchText) {
-  return function(e) {
-    e.persist();
-
-    debounce(() => {
-      const { value } = e.target;
-
-      setSearchText(value);
-    }, 500)();
-  }
-}
-
-async function loadArticles(type, params, setArticles) {
-  setArticles({
-    isLoading: true,
-    data: [],
-    onError: false
-  });
-
-  try {
-    const response = await fetch(`${baseURL}/articles?type=${type}`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
-    });
-
-    if (response.status >= 200 && response.status <= 299) {
-      const { articles } = await response.json();
-
-      setArticles({
-        isLoading: false,
-        data: articles || [],
-        onError: false
-      });
-    }
-    else {
-      setArticles({
-        isLoading: false,
-        data: [],
-        onError: true
-      });
-    }
-  } catch (error) {
-    setArticles({
-      isLoading: false,
-      data: [],
-      onError: true
-    });
-  }
-}
+import { fetchArticles } from "../api";
 
 function Home() {
-  const defaultContentTitle = 'top UK headlines';
-  const searchContentTitle = 'search results for:';
-  const inputLabel = 'Filter news by keyword. Advanced: use quotes (\'\') for exact matches, and the + / - symbols for needed / excluded words.';
+  const defaultContentTitle = "top UK headlines";
+  const searchContentTitle = "search results for:";
+  const inputLabel =
+    "Filter news by keyword. Advanced: use quotes ('') for exact matches, and the + / - symbols for needed / excluded words.";
 
-  const searchInputRef = useRef();
+  const { callback: debouncedSetSearchText } = useDebouncedCallback((value) => {
+    setSearchText(value);
+  }, 500);
 
-  const [contentTitle, setContentTitle] = useState(defaultContentTitle);
-  const [searchText, setSearchText] = useState('');
+  const [category, setCategory] = useState("q");
+  const [searchText, setSearchText] = useState("");
   const [articles, setArticles] = useState({
     isLoading: true,
     data: [],
-    onError: false
+    onError: false,
   });
 
   useEffect(() => {
-    if(searchText.length > 0) {
+    const type = searchText.length > 0 ? "search" : "headlines";
+    const bodyParam =
+      searchText.length > 0 ? { [category]: searchText } : { country: "gb" };
+    setArticles({
+      isLoading: true,
+      data: [],
+      onError: false,
+    });
+    fetchArticles(type, bodyParam)
+      .then((articles) =>
+        setArticles({
+          isLoading: false,
+          data: articles,
+          onError: false,
+        })
+      )
+      .catch(() =>
+        setArticles({
+          isLoading: false,
+          data: [],
+          onError: true,
+        })
+      );
+  }, [searchText, category]);
 
-      setContentTitle(`${searchContentTitle} ${searchText}`);
-
-      loadArticles('search', { q: searchText }, setArticles);
-    }
-    else {
-      searchInputRef.current.value = '';
-
-      setContentTitle(defaultContentTitle);
-
-      let bodyParam = { country: 'gb' };
-
-      loadArticles('headlines', bodyParam, setArticles);
-    }
-  }, [searchText]);
-
+  const contentTitle =
+    searchText.length > 0 ? searchContentTitle : defaultContentTitle;
   return (
     <HomePage>
-      <PageTitle data-testid='search-title'>
+      <PageTitle data-testid="search-title">
         Showing you the {contentTitle}
       </PageTitle>
 
-      <InputGroup
-        role='search'
-        aria-label='for news articles'>
+      <InputGroup role="search" aria-label="for news articles">
         <SearchInput
-          ref={searchInputRef}
-          name='search-input'
-          type='text'
+          name="search-input"
+          type="text"
           placeholder={inputLabel}
           defaultValue={searchText}
           aria-label={inputLabel}
-          data-testid='search-input'
-          onChange={loadSearchInput(setSearchText)} />
-
+          data-testid="search-input"
+          onChange={(e) => debouncedSetSearchText(e.target.value)}
+        />
         <SearchIcon />
       </InputGroup>
+      <FormControl variant="outlined">
+        <InputLabel id="news-category-label">Category</InputLabel>
+        <Select
+          labelId="news-category-label"
+          id="news-category"
+          value={category}
+          onChange={(event) => setCategory(event.target.value)}
+          label="Category"
+        >
+          <MenuItem value={"q"}>Title and description</MenuItem>
+          <MenuItem value={"qInTitle"}>Only Title</MenuItem>
+        </Select>
+      </FormControl>
 
-      {articles.isLoading === true &&
-        <ArticleSpinner label='Loading articles' />}
+      {articles.isLoading === true && (
+        <ArticleSpinner label="Loading articles" />
+      )}
 
-      {articles.data?.length > 0 &&
-        <ArticleList data-testid='article-list'>
+      {articles.data?.length > 0 && (
+        <ArticleList data-testid="article-list">
           {articles.data?.map((article, index) => (
             <Article key={index} article={article} />
           ))}
-        </ArticleList>}
+        </ArticleList>
+      )}
 
-      {articles.onError === true &&
-        <PageMessage>
-          Network error, try again later :(
-        </PageMessage>}
+      {articles.onError === true && (
+        <PageMessage>Network error, try again later :(</PageMessage>
+      )}
 
-      {articles.onError === false && articles.data?.length === 0 &&
-        articles.isLoading === false &&
+      {articles.onError === false &&
+        articles.data?.length === 0 &&
+        articles.isLoading === false && (
           <PageMessage>
             Sorry, no news articles are available at moment :(
-          </PageMessage>}
+          </PageMessage>
+        )}
     </HomePage>
   );
 }
@@ -169,18 +144,19 @@ const InputGroup = styled.div`
   display: inline-grid;
   flex: 1 1 auto;
   width: 100%;
+  margin-bottom: 2.5vh;
 
   svg {
     position: absolute;
     top: 50%;
     left: 12px;
     transform: translateY(-50%);
-    fill: rgba(0, 0, 0, .44);
+    fill: rgba(0, 0, 0, 0.44);
   }
 `;
 
 const SearchInput = styled.input`
-  color: rgba(0, 0, 0, .87);
+  color: rgba(0, 0, 0, 0.87);
   line-height: 20px;
   padding: 8px 12px 8px 45px;
   margin: 0;
@@ -193,7 +169,7 @@ const SearchInput = styled.input`
   font-size: 16px;
 
   &[placeholder] {
-    color: rgba(0, 0, 0, .74);
+    color: rgba(0, 0, 0, 0.74);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
