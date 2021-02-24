@@ -1,12 +1,12 @@
-import React, { lazy, Suspense } from 'react';
-import styled, { createGlobalStyle } from 'styled-components';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import React, { lazy, Suspense } from "react";
+import styled, { createGlobalStyle } from "styled-components";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 
-import Navbar from 'components/Navbar';
-import Spinner from 'components/Spinner';
+import Navbar from "components/Navbar";
+import Spinner from "components/Spinner";
 
-const Home = lazy(() => import('views/Home'));
-const About = lazy(() => import('views/About'));
+const Home = lazy(() => import("views/Home/index"));
+const About = lazy(() => import("views/About"));
 
 function App() {
   return (
@@ -17,11 +17,11 @@ function App() {
         <Navbar />
 
         <MainView>
-          <Suspense fallback={<Spinner label='Loading page' />}>
+          <Suspense fallback={<Spinner label="Loading page" />}>
             <Switch>
-              <Route exact={true} path='/' component={Home} />
+              <Route exact={true} path="/" component={Home} />
 
-              <Route path='/about' component={About} />
+              <Route path="/about" component={About} />
             </Switch>
           </Suspense>
         </MainView>
@@ -49,8 +49,8 @@ const GlobalStyle = createGlobalStyle`
 const AppContainer = styled.div`
   display: grid;
   grid-template-areas:
-    'header'
-    'content';
+    "header"
+    "content";
   grid-template-rows: 64px auto;
   width: 100vw;
   height: 100vh;
@@ -62,7 +62,7 @@ const AppContainer = styled.div`
 const MainView = styled.main`
   grid-area: content;
   max-width: 100%;
-  background-color: #fafafa;  
+  background-color: #fafafa;
   padding: 24px;
 
   @media (max-width: 486px) {
