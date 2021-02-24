@@ -7,10 +7,9 @@ import Select from "@material-ui/core/Select";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
 
-import Spinner from "components/Spinner";
-import Article from "components/Article";
+import { ArticleList } from "./ArticleList";
 
-import { fetchArticles } from "../api";
+import { fetchArticles } from "api";
 
 function Home() {
   const defaultContentTitle = "top UK headlines";
@@ -30,7 +29,7 @@ function Home() {
     onError: false,
   });
 
-  useEffect(() => {
+  const loadArticles = () => {
     const type = searchText.length > 0 ? "search" : "headlines";
     const bodyParam =
       searchText.length > 0 ? { [category]: searchText } : { country: "gb" };
@@ -54,7 +53,17 @@ function Home() {
           onError: true,
         })
       );
-  }, [searchText, category]);
+  };
+
+  useEffect(() => {
+    loadArticles();
+  }, [searchText]);
+
+  useEffect(() => {
+    if (searchText !== "") {
+      loadArticles();
+    }
+  }, [category]);
 
   const contentTitle =
     searchText.length > 0 ? searchContentTitle : defaultContentTitle;
@@ -90,29 +99,7 @@ function Home() {
         </Select>
       </FormControl>
 
-      {articles.isLoading === true && (
-        <ArticleSpinner label="Loading articles" />
-      )}
-
-      {articles.data?.length > 0 && (
-        <ArticleList data-testid="article-list">
-          {articles.data?.map((article, index) => (
-            <Article key={index} article={article} />
-          ))}
-        </ArticleList>
-      )}
-
-      {articles.onError === true && (
-        <PageMessage>Network error, try again later :(</PageMessage>
-      )}
-
-      {articles.onError === false &&
-        articles.data?.length === 0 &&
-        articles.isLoading === false && (
-          <PageMessage>
-            Sorry, no news articles are available at moment :(
-          </PageMessage>
-        )}
+      <ArticleList articles={articles} />
     </HomePage>
   );
 }
@@ -189,26 +176,6 @@ const SearchInput = styled.input`
       fill: #ee44aa;
     }
   }
-`;
-
-const PageMessage = styled.h2`
-  margin: auto;
-  margin-top: 15%;
-  font-weight: 400;
-  font-size: 24px;
-  line-height: 1.2;
-  text-align: center;
-`;
-
-const ArticleList = styled.ul`
-  display: flex;
-  flex-wrap: wrap;
-  margin: 0;
-  padding: 0;
-`;
-
-const ArticleSpinner = styled(Spinner)`
-  margin-top: 15%;
 `;
 
 export default Home;
